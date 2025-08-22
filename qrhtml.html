@@ -53,6 +53,7 @@
         .card:nth-child(5) { animation-delay: 0.5s; }
         .card:nth-child(6) { animation-delay: 0.6s; }
         .card:nth-child(7) { animation-delay: 0.7s; }
+        .card:nth-child(8) { animation-delay: 0.8s; }
 
 
         .modal {
@@ -92,6 +93,7 @@
             font-weight: bold;
             cursor: pointer;
             transition: color 0.2s ease, transform 0.2s ease;
+            z-index: 10;
         }
         .close-button:hover,
         .close-button:focus {
@@ -106,6 +108,47 @@
         .interactive-checklist li.completed {
             text-decoration: line-through;
             color: #9ca3af;
+        }
+
+        /* Carousel Styles */
+        .carousel-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 0.5rem;
+        }
+        .carousel-slide {
+            max-height: 800px;
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .carousel-slide.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0.4; }
+            to { opacity: 1; }
+        }
+        .carousel-prev, .carousel-next {
+            cursor: pointer;
+            position: absolute;
+            top: 50%;
+            width: auto;
+            padding: 16px;
+            margin-top: -22px;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+            transition: 0.6s ease;
+            border-radius: 0 3px 3px 0;
+            user-select: none;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .carousel-next {
+            right: 0;
+            border-radius: 3px 0 0 3px;
+        }
+        .carousel-prev:hover, .carousel-next:hover {
+            background-color: rgba(0,0,0,0.8);
         }
     </style>
 </head>
@@ -159,6 +202,14 @@
                 <h2 class="text-2xl font-bold mb-4 text-green-600">Try the QR Generator!</h2>
                 <p>Experience the core function firsthand. Enter some text and generate a real, scannable QR code instantly.</p>
             </div>
+            
+             <!-- Card: Mockups -->
+            <div class="card cursor-pointer" onclick="showModal('modal-mockups')">
+                <h2 class="text-2xl font-bold mb-4 text-purple-600">Application Mockups</h2>
+                <p>Visualize the user interface. Check out the design mockups for the main screens of the application in a carousel.</p>
+            </div>
+
+
         </div>
     </div>
 
@@ -277,6 +328,39 @@
         </div>
     </div>
 
+    <div id="modal-mockups" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal('modal-mockups')">&times;</span>
+            <h3 class="text-3xl font-bold mb-6 text-purple-700">Application Mockups</h3>
+            <div class="carousel-container">
+                <div class="carousel-slide active">
+                    <img src="./images/0.jpeg" alt="QR Generator Mockup" class="w-full rounded-lg">
+                    <div class="text-center mt-2 text-gray-600">Login page</div>
+                </div>
+                <div class="carousel-slide">
+                    <img src="./images/1.jpeg" alt="Login Page Mockup" class="w-full rounded-lg">
+                    <div class="text-center mt-2 text-gray-600">Classroom Access</div>
+                </div>
+                <div class="carousel-slide">
+                    <img src="./images/2.jpeg" alt="Logs Dashboard Mockup" class="w-full rounded-lg">
+                    <div class="text-center mt-2 text-gray-600">QR Generator</div>
+                </div>
+                                <div class="carousel-slide">
+                    <img src="./images/3.jpeg" alt="Logs Dashboard Mockup" class="w-full rounded-lg">
+                    <div class="text-center mt-2 text-gray-600">QR Scan</div>
+                </div>
+                                <div class="carousel-slide">
+                    <img src="./images/4.jpeg" alt="Logs Dashboard Mockup" class="w-full rounded-lg">
+                    <div class="text-center mt-2 text-gray-600">Logs Dashboard</div>
+                </div>
+                
+                
+                <a class="carousel-prev" onclick="changeSlide(-1)">&#10094;</a>
+                <a class="carousel-next" onclick="changeSlide(1)">&#10095;</a>
+            </div>
+        </div>
+    </div>
+
 
     <script>
         // --- Modal Logic ---
@@ -315,18 +399,13 @@
             }
 
             try {
-                // 0 = type number (auto), 'L' = error correction level
                 const qr = qrcode(0, 'L');
                 qr.addData(text);
                 qr.make();
-                
-                // Create image data URL (PNG format)
-                const qrCodeDataUrl = qr.createDataURL(10, 2); // (cellSize, margin)
-                
+                const qrCodeDataUrl = qr.createDataURL(10, 2);
                 qrImage.src = qrCodeDataUrl;
                 downloadLink.href = qrCodeDataUrl;
                 downloadLink.classList.remove('hidden');
-
             } catch (e) {
                 console.error("Error generating QR code:", e);
                 qrImage.src = '';
@@ -334,19 +413,36 @@
             }
         }
         
-        // Generate a default QR on load for the modal
         function initializeQrGenerator() {
              document.getElementById('qr-text').value = 'https://example.com';
              generateQrCode();
         }
         
-        // We call this when the modal is opened, not on window load,
-        // to ensure elements are ready.
+        // --- Carousel Logic ---
+        let slideIndex = 1;
+        
+        function showSlides(n) {
+            const slides = document.querySelectorAll("#modal-mockups .carousel-slide");
+            if (n > slides.length) { slideIndex = 1 }
+            if (n < 1) { slideIndex = slides.length }
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[slideIndex - 1].classList.add('active');
+        }
+
+        function changeSlide(n) {
+            showSlides(slideIndex += n);
+        }
+
+        // --- Enhanced showModal to initialize components ---
         const originalShowModal = showModal;
         showModal = function(modalId) {
             originalShowModal(modalId);
             if (modalId === 'modal-generator') {
                 initializeQrGenerator();
+            }
+            if (modalId === 'modal-mockups') {
+                slideIndex = 1;
+                showSlides(slideIndex);
             }
         }
 
